@@ -1,0 +1,67 @@
+var express = require('express');
+var router = express.Router();
+var fs = require('fs');
+var json2csv = require('json2csv');
+
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  res.render('index', { title: 'Express' });
+});
+
+var request = require("request");
+var count;
+var postData;
+
+router.post('/fbdata', function(req, res, next) {
+  postData = [];
+  count = 0;
+  var access_token = req.body.access_token;
+  var page_name = req.body.page_name;
+  var req_count = req.body.req_count;
+  var url = 'https://graph.facebook.com/v2.7/'+page_name+'/feed?access_token='+access_token+'&debug=all&format=json&limit=100';
+  getData(access_token, page_name, req_count, url, function(feedsResultantData){
+    var feeds = feedsResultantData;
+    var url = 'https://graph.facebook.com/v2.7/'+page_name+'/posts?access_token='+access_token+'&debug=all&format=json&limit=100';
+    postData = [];
+    count = 0;
+    getData(access_token, page_name, req_count, url, function(postsResultantData){
+      filterData(feeds, postsResultantData, page_name, function(count) {
+        res.end('Done fecthing '+ count + ' posts from the requested page - '+ page_name);
+      });
+    });
+  });
+
+});
+
+function getData(access_token, page_name, req_count, url, callback) {
+  count++;
+  request(url, function(error, response, body) {
+    response = JSON.parse(response.body);
+    postData = postData.concat(response.data);
+    if(count < req_count) {
+      if(!response.paging || !response.paging.next) {
+        callback(postData);
+      } else {
+        getData(access_token, page_name, req_count, response.paging.next, callback);
+      }
+    } else {
+      callback(postData);
+    }
+  });
+}
+
+function filterData(feeds, posts, page_name, callback) {
+  var postsIds = [];
+  posts.forEach((item) => (postsIds.push(item.id)));
+  var result = [];
+  feeds.forEach((item)=>{
+    if(postsIds.indexOf(item.id) === -1) {
+      item["store_name"] = page_name;
+      result.push(item);
+    }
+  });
+  fs.writeFileSync(page_name+'.csv', json2csv({ data: result}));
+  callback(result.length)
+}
+
+module.exports = router;

@@ -1,0 +1,37 @@
+<html>
+    <head>
+        <title>Report</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+
+        <script>
+            angular.module('FBMod',[])
+                .controller('FBCtrl',['$scope', '$http', function($scope, $http){
+                    $scope.fbDetails = {};
+                    $scope.sendReq = function() {
+                        $scope.response = "Fetching . . .";
+                        $http({
+                            method: 'POST',
+                            url: '/fbdata',
+                            data: $scope.fbDetails
+                        }).then(function(res){
+                            $scope.response = res.data;
+                        }, function(err){
+
+                        });
+                    }
+                }]);
+        </script>
+    </head>
+    <body ng-app='FBMod'>
+        <div ng-controller='FBCtrl'>
+            <h3>Enter Details to get FB Page data:</h3>
+            Access Token : <input type='text' ng-model='fbDetails.access_token' placeholder="Enter Access Token">
+            Page Name : <input type='text' ng-model='fbDetails.page_name' placeholder="Enter Page Name">
+            No Request to be made : <input type='text' ng-model='fbDetails.req_count' placeholder="Enter no. requests to be made">
+            <button ng-click='sendReq()'>Fetch</button>
+            <br>
+            <br>
+            <div>{{response}}</div>
+        </div>
+    </body>
+</html>
