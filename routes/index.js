@@ -3,6 +3,8 @@ var router = express.Router();
 var fs = require('fs');
 var json2csv = require('json2csv');
 
+var storeMap = require('./../storeInfoMap');
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -16,7 +18,7 @@ router.post('/fbdata', function(req, res, next) {
   postData = [];
   count = 0;
   var access_token = req.body.access_token;
-  var page_name = req.body.page_name;
+  var page_name = req.body.page_name.toLowerCase();
   var req_count = req.body.req_count;
   var url = 'https://graph.facebook.com/v2.7/'+page_name+'/feed?access_token='+access_token+'&debug=all&format=json&limit=100';
   getData(access_token, page_name, req_count, url, function(feedsResultantData){
@@ -52,11 +54,20 @@ function getData(access_token, page_name, req_count, url, callback) {
 
 function filterData(feeds, posts, page_name, callback) {
   var postsIds = [];
+  var mapData = storeMap[page_name];
   posts.forEach((item) => (postsIds.push(item.id)));
   var result = [];
   feeds.forEach((item)=>{
     if(postsIds.indexOf(item.id) === -1) {
-      item["store_name"] = page_name;
+      item["store_nbr"] = mapData.store_nbr;
+      item["store_name"] = mapData.store_name;
+      item["state_prov_code"] = mapData.state_prov_code;
+      item["region_nbr"] = mapData.region_nbr;
+      item["region_name"] = mapData.region_name;
+      item["subdiv_name"] = mapData.subdiv_name;
+      item["subdiv_nbr"] = mapData.subdiv_nbr;
+      item["post_body_txt"] = item.message;
+      delete item.message;
       result.push(item);
     }
   });
