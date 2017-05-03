@@ -1,7 +1,7 @@
 var map = {
   "walmart1": {
     "store_nbr": "1",
-    "store_name": "Walmart Rogers - W Walnut St, AR",
+    "store_name": "ROGERS, AR",
     "state_prov_code": "AR",
     "region_nbr": "R",
     "region_name": "R",
